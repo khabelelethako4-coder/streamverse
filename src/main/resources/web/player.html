@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>StreamVerse player</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  /* The YouTube iframe is shown but never receives mouse input: every control
+     in the app is our own JavaFX UI, which talks to the player via cmd(). */
+  iframe { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<iframe id="yt"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        src="https://www.youtube.com/embed/%%VIDEO_ID%%?enablejsapi=1&autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=0&disablekb=1&start=%%START%%&origin=%%ORIGIN_ENC%%&widget_referrer=%%ORIGIN_ENC%%"></iframe>
+<script>
+/*
+ * Tiny bridge between the YouTube IFrame player and JavaFX.
+ *  - Java -> page : engine.executeScript("cmd('pauseVideo')")
+ *  - page -> Java : engine.executeScript("snapshot()") returns "state|time|duration|muted|error"
+ * YouTube player states: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued.
+ */
+var yt = document.getElementById('yt');
+var S = -2, CUR = 0, DUR = 0, MUTED = 0, ERR = '', GOT = false, tries = 0;
+
+function post(o) {
+  try { yt.contentWindow.postMessage(JSON.stringify(o), '*'); } catch (e) {}
+}
+function cmd(fn, args) {
+  post({ event: 'command', func: fn, args: args || [] });
+}
+function snapshot() {
+  return S + '|' + CUR + '|' + DUR + '|' + MUTED + '|' + ERR;
+}
+/** Jump forward/backward by d seconds (negative = rewind), clamped to the video length. */
+function skip(d) {
+  var t = Math.max(0, CUR + d);
+  if (DUR > 0) t = Math.min(t, DUR - 0.3);
+  cmd('seekTo', [t, true]);
+  CUR = t;
+}
+function handshake() {
+  // Ask the player to start sending us state/time updates.
+  post({ event: 'listening', id: 1, channel: 'widget' });
+  cmd('addEventListener', ['onStateChange']);
+  cmd('addEventListener', ['onError']);
+}
+yt.addEventListener('load', function () {
+  handshake();
+  var t = setInterval(function () {
+    if (GOT || ++tries > 40) { clearInterval(t); return; }
+    handshake();
+  }, 400);
+});
+window.addEventListener('message', function (e) {
+  if (!e.origin || e.origin.indexOf('youtube') < 0) return;
+  var d;
+  try { d = (typeof e.data === 'string') ? JSON.parse(e.data) : e.data; } catch (x) { return; }
+  if (!d) return;
+  GOT = true;
+  if (d.event === 'onReady') { cmd('playVideo'); }
+  else if (d.event === 'onStateChange') { S = d.info; }
+  else if (d.event === 'onError') { ERR = String(d.info); }
+  else if ((d.event === 'infoDelivery' || d.event === 'initialDelivery') && d.info) {
+    var i = d.info;
+    if (i.playerState !== undefined) S = i.playerState;
+    if (i.currentTime !== undefined) CUR = i.currentTime;
+    if (i.duration) DUR = i.duration;
+    if (i.muted !== undefined) MUTED = i.muted ? 1 : 0;
+  }
+});
+</script>
+</body>
+</html>

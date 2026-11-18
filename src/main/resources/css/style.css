@@ -1,0 +1,20 @@
+/* StreamVerse global stylesheet: dark Netflix-style theme + slim scrollbar */
+.root { -fx-background-color: #0e0608; }
+
+.scroll-pane { -fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }
+.scroll-pane:focused { -fx-background-insets: 0; }
+
+.scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 10; -fx-padding: 0; }
+.scroll-bar .track, .scroll-bar .track-background { -fx-background-color: transparent; -fx-border-color: transparent; }
+.scroll-bar .thumb { -fx-background-color: #4a4a4a; -fx-background-radius: 5; -fx-background-insets: 1; }
+.scroll-bar .thumb:hover { -fx-background-color: #777777; }
+.scroll-bar .increment-button, .scroll-bar .decrement-button { -fx-padding: 0; -fx-background-color: transparent; }
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+
+.search-field {
+    -fx-background-color: transparent; -fx-text-fill: white; -fx-prompt-text-fill: #8c8c8c;
+    -fx-font-size: 14; -fx-highlight-fill: #E50914; -fx-padding: 0 8 0 4;
+    -fx-faint-focus-color: transparent; -fx-focus-color: transparent;
+}
+.search-field:focused { -fx-background-color: transparent; -fx-background-insets: 0; }
