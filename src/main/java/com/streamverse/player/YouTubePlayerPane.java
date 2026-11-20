@@ -1,6 +1,10 @@
 package com.streamverse.player;
 
+import java.io.IOException;
+import java.util.Locale;
+
 import com.streamverse.model.Movie;
+
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -18,9 +22,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.util.Duration;
-
-import java.io.IOException;
-import java.util.Locale;
 
 /**
  * Video player component: a WebView that shows the YouTube embed (served by {@link LocalPlayerServer}) plus a
@@ -45,6 +46,7 @@ public class YouTubePlayerPane extends StackPane {
     private final BooleanProperty ready = new SimpleBooleanProperty(false);
     private final DoubleProperty currentTime = new SimpleDoubleProperty();
     private final DoubleProperty duration = new SimpleDoubleProperty();
+    private final DoubleProperty volume = new SimpleDoubleProperty(100);
     private final BooleanProperty muted = new SimpleBooleanProperty();
     private final StringProperty errorMessage = new SimpleStringProperty("");
     private final StringProperty errorCode = new SimpleStringProperty("");            // YouTube error number, "" if none
@@ -126,6 +128,20 @@ public class YouTubePlayerPane extends StackPane {
         muted.set(!muted.get()); // optimistic; the poller confirms it
     }
 
+    public void setVolume(double value) {
+        double next = Math.max(0, Math.min(100, value));
+        volume.set(next);
+        exec(String.format(Locale.ROOT, "cmd('setVolume',[%.0f])", next));
+        if (next > 0 && muted.get()) {
+            exec("cmd('unMute')");
+            muted.set(false);
+        }
+    }
+
+    public void changeVolume(double amount) {
+        setVolume(volume.get() + amount);
+    }
+
     // ------------------------------------------------------------------ polling
 
     private void exec(String js) {
@@ -147,14 +163,16 @@ public class YouTubePlayerPane extends StackPane {
         }
         if (!(result instanceof String)) return;
         String[] p = ((String) result).split("\\|", -1);
-        if (p.length < 5) return;
+        if (p.length < 6) return;
 
-        if (!p[4].isEmpty()) { errorCode.set(p[4]); fail(messageForError(p[4])); return; }
+        if (!p[5].isEmpty()) { errorCode.set(p[5]); fail(messageForError(p[5])); return; }
 
         currentTime.set(parse(p[1]));
         double d = parse(p[2]);
         if (d > 0) duration.set(d);
         muted.set("1".equals(p[3]));
+        double reportedVolume = parse(p[4]);
+        if (reportedVolume >= 0) volume.set(reportedVolume);
 
         switch ((int) parse(p[0])) {
             case 1 -> { ready.set(true); state.set(State.PLAYING); }
@@ -190,6 +208,7 @@ public class YouTubePlayerPane extends StackPane {
     public ReadOnlyBooleanProperty readyProperty() { return ready; }
     public DoubleProperty currentTimeProperty() { return currentTime; }
     public DoubleProperty durationProperty() { return duration; }
+    public DoubleProperty volumeProperty() { return volume; }
     public BooleanProperty mutedProperty() { return muted; }
     public StringProperty errorMessageProperty() { return errorMessage; }
     public StringProperty errorCodeProperty() { return errorCode; }

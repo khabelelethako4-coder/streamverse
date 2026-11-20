@@ -23,7 +23,7 @@
  * YouTube player states: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued.
  */
 var yt = document.getElementById('yt');
-var S = -2, CUR = 0, DUR = 0, MUTED = 0, ERR = '', GOT = false, tries = 0;
+var S = -2, CUR = 0, DUR = 0, MUTED = 0, VOLUME = 100, ERR = '', GOT = false, tries = 0;
 
 function post(o) {
   try { yt.contentWindow.postMessage(JSON.stringify(o), '*'); } catch (e) {}
@@ -32,7 +32,7 @@ function cmd(fn, args) {
   post({ event: 'command', func: fn, args: args || [] });
 }
 function snapshot() {
-  return S + '|' + CUR + '|' + DUR + '|' + MUTED + '|' + ERR;
+  return S + '|' + CUR + '|' + DUR + '|' + MUTED + '|' + VOLUME + '|' + ERR;
 }
 /** Jump forward/backward by d seconds (negative = rewind), clamped to the video length. */
 function skip(d) {
@@ -69,6 +69,7 @@ window.addEventListener('message', function (e) {
     if (i.currentTime !== undefined) CUR = i.currentTime;
     if (i.duration) DUR = i.duration;
     if (i.muted !== undefined) MUTED = i.muted ? 1 : 0;
+    if (i.volume !== undefined) VOLUME = i.volume;
   }
 });
 </script>

@@ -1,5 +1,7 @@
 package com.streamverse.ui;
 
+import java.util.function.UnaryOperator;
+
 import com.streamverse.audio.SoundManager;
 import com.streamverse.audio.SoundManager.Sfx;
 import com.streamverse.library.UserLibrary;
@@ -9,19 +11,19 @@ import com.streamverse.player.YouTubePlayerPane;
 import com.streamverse.player.YouTubePlayerPane.State;
 import com.streamverse.ui.controls.Buttons;
 import com.streamverse.ui.controls.CustomButton;
-import com.streamverse.ui.controls.CustomButton.Style;
 import com.streamverse.ui.controls.Icon;
 import com.streamverse.ui.controls.LoadingAnimation;
 import com.streamverse.ui.controls.SeekBar;
+
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.application.Platform;
-import javafx.animation.PauseTransition;
 import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
+import javafx.animation.Timeline;
 import javafx.application.HostServices;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -38,8 +40,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-
-import java.util.function.UnaryOperator;
 import javafx.util.Duration;
 
 /**
@@ -397,6 +397,8 @@ public class PlayerOverlay extends StackPane {
         if (c == KeyCode.ESCAPE) {
             if (!fullscreen) { close(); e.consume(); }       // in full screen Esc first leaves full screen
         } else if (c == KeyCode.SPACE) { togglePlayback(true); e.consume(); }
+        else if (c == KeyCode.UP) { player.changeVolume(5); e.consume(); }
+        else if (c == KeyCode.DOWN) { player.changeVolume(-5); e.consume(); }
         else if (c == KeyCode.M) { player.toggleMute(); e.consume(); }
         else if (c == KeyCode.F) { toggleFullScreen(); e.consume(); }
         else if (c == KeyCode.N) { playNext(); e.consume(); }
