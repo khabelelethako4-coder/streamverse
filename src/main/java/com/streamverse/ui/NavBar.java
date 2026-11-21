@@ -1,6 +1,7 @@
 package com.streamverse.ui;
 
 import com.streamverse.audio.SoundManager;
+import com.streamverse.net.VoiceSearchService;
 import com.streamverse.ui.controls.CustomButton;
 import com.streamverse.ui.controls.CustomButton.Style;
 import com.streamverse.ui.controls.Icon;
@@ -13,8 +14,10 @@ import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.AccessibleRole;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -45,7 +48,11 @@ public class NavBar extends StackPane {
     private boolean scrolled;
     private final NavLink genresLink;
 
-    public NavBar(Consumer<String> onNavigate, Runnable onGenres, Consumer<String> onSearch) {
+    private final VoiceSearchService voiceSearch = new VoiceSearchService();
+    private final CustomButton voiceButton = new CustomButton("Mic", null, Style.ICON);
+
+    public NavBar(Consumer<String> onNavigate, Runnable onGenres, Consumer<String> onSearch,
+                  Runnable onAccessibility) {
         setPickOnBounds(false);
         setMaxHeight(USE_PREF_SIZE);
 
@@ -93,6 +100,8 @@ public class NavBar extends StackPane {
         iconPane.setOnMouseClicked(e -> { SoundManager.get().play(SoundManager.Sfx.CLICK); field.requestFocus(); });
         field.getStyleClass().add("search-field");
         field.setPromptText("Search movies, genres\u2026");
+        field.setAccessibleText("Search movies and genres");
+        field.setAccessibleHelp("Type a title or genre, or use the microphone button to speak a query.");
         field.setOnKeyPressed(e -> { if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) { field.clear(); searchBox.requestFocus(); } });
         HBox.setHgrow(field, Priority.ALWAYS);
         searchBox.setAlignment(Pos.CENTER_LEFT);
@@ -107,8 +116,24 @@ public class NavBar extends StackPane {
         field.focusedProperty().addListener((o, a, focused) -> expandSearch(focused || !field.getText().isEmpty()));
         field.textProperty().addListener((o, a, text) -> { onSearch.accept(text.trim()); expandSearch(true); });
 
+        voiceButton.setAccessibleRole(AccessibleRole.BUTTON);
+        voiceButton.setAccessibleText("Start voice search");
+        voiceButton.setAccessibleHelp("Records up to 10 seconds and sends audio to OpenAI for transcription.");
+        Tooltip.install(voiceButton, new Tooltip(
+                "Voice search: records up to 10 seconds and sends audio to OpenAI; charges may apply."));
+        voiceButton.setOnAction(this::toggleVoiceSearch);
+
+        CustomButton accessibility = new CustomButton("Aa", null, Style.ICON);
+        accessibility.setAccessibleRole(AccessibleRole.BUTTON);
+        accessibility.setAccessibleText("Accessibility settings");
+        Tooltip.install(accessibility, new Tooltip("Accessibility settings"));
+        accessibility.setOnAction(onAccessibility);
+
         // ---- sound toggle
         CustomButton sound = new CustomButton(null, Icon.VOLUME, Style.ICON);
+        sound.setAccessibleRole(AccessibleRole.BUTTON);
+        sound.setAccessibleText("Toggle sound effects");
+        Tooltip.install(sound, new Tooltip("Toggle sound effects"));
         sound.setOnAction(() -> {
             boolean on = !SoundManager.get().enabledProperty().get();
             SoundManager.get().enabledProperty().set(on);
@@ -117,7 +142,7 @@ public class NavBar extends StackPane {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(28, logo, linkBox, spacer, searchBox, sound);
+        HBox bar = new HBox(20, logo, linkBox, spacer, searchBox, voiceButton, accessibility, sound);
         bar.setAlignment(Pos.CENTER);
         bar.setPadding(new Insets(14, Theme.SIDE, 18, Theme.SIDE));
 
@@ -125,6 +150,8 @@ public class NavBar extends StackPane {
     }
 
     public NavLink getGenresLink() { return genresLink; }
+
+    public void dispose() { voiceSearch.close(); }
 
     /** Empties the search box (which also leaves search mode). */
     public void clearSearch() { if (!field.getText().isEmpty()) field.clear(); }
@@ -157,5 +184,40 @@ public class NavBar extends StackPane {
         searchBox.setStyle(open
                 ? "-fx-background-color: rgba(0,0,0,0.75); -fx-border-color: rgba(255,255,255,0.85); -fx-border-width: 1;"
                 : "-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 1;");
+    }
+
+    private void toggleVoiceSearch() {
+        if (voiceSearch.state() == VoiceSearchService.State.LISTENING
+                || voiceSearch.state() == VoiceSearchService.State.STARTING) {
+            voiceSearch.stop();
+            return;
+        }
+        voiceSearch.start(this::onVoiceState, text -> field.setText(text), message -> {
+            onVoiceState(VoiceSearchService.State.READY);
+            Toast.show(message);
+        });
+    }
+
+    private void onVoiceState(VoiceSearchService.State state) {
+        switch (state) {
+            case STARTING -> {
+                voiceButton.setText("...");
+                voiceButton.setAccessibleText("Starting voice search");
+            }
+            case LISTENING -> {
+                voiceButton.setText("Stop");
+                voiceButton.setAccessibleText("Stop voice search");
+            }
+            case TRANSCRIBING -> {
+                voiceButton.setText("...");
+                voiceButton.setDisable(true);
+                voiceButton.setAccessibleText("Transcribing voice search");
+            }
+            case READY -> {
+                voiceButton.setText("Mic");
+                voiceButton.setDisable(false);
+                voiceButton.setAccessibleText("Start voice search");
+            }
+        }
     }
 }

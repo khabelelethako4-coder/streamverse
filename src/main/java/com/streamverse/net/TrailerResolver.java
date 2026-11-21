@@ -59,7 +59,6 @@ public final class TrailerResolver {
 
     /** YouTube address (a -Dstreamverse.ytHost=... override exists only for offline testing). */
     private static final String YT_HOST = System.getProperty("streamverse.ytHost", "https://www.youtube.com");
-    private static final TrailerResolver INSTANCE = new TrailerResolver();
     private static final String UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
     private static final Pattern VIDEO_ID = Pattern.compile("\"videoId\":\"([A-Za-z0-9_-]{11})\"");
     private static final Pattern TITLE = Pattern.compile("\"title\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
@@ -67,6 +66,7 @@ public final class TrailerResolver {
     private static final Pattern BAD_WORDS = Pattern.compile(
             "reaction|review|explained|breakdown|ending|scene|clip|fan[ -]?made|parody|recap|analysis|behind the scenes|full movie|soundtrack|theory");
     private static final Set<String> STOP = Set.of("the", "a", "an", "of", "and", "in", "to", "part", "vol");
+    private static final TrailerResolver INSTANCE = new TrailerResolver();
 
     private final Map<String, String> fixes = new ConcurrentHashMap<>();            // registered key -> working id
     private final Map<String, CompletableFuture<Optional<String>>> inFlight = new ConcurrentHashMap<>();
