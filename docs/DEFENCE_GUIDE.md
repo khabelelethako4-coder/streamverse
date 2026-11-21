@@ -7,7 +7,7 @@ Read the code listed next to each question, run the app, and explain it in your 
    in one `StackPane`; the last child is drawn on top. `PlayerOverlay` is invisible until a movie is opened.
 2. **Why `Launcher` and `App`?** – a class extending `Application` can't be the main class when JavaFX is on the
    classpath (fat JAR / some IDEs); `Launcher` has a plain `main`.
-3. **What do the Maven dependencies do?** – `javafx-controls` (layouts/labels), `javafx-media` (`AudioClip`), `javafx-web` (`WebView`).
+3. **What do the Maven dependencies do?** – `javafx-controls` (layouts/labels), `javafx-media` (`AudioClip`), `javafx-web` (`WebView`), and Gson (OpenAI transcription JSON).
 
 ## Requirements
 4. **How do you show exactly 5 thumbnails?** (`CategoryRow`) – viewport `Pane` with a `Rectangle` clip; card width =
@@ -73,6 +73,9 @@ Read the code listed next to each question, run the app, and explain it in your 
 32. **How is Continue Watching built?** - `PlayerOverlay.saveProgress()` stores `P:key:seconds:duration`; `LocalPlayerServer` passes `?t=seconds` -> `start=` in the embed; `MovieCard` draws the red bar from `UserLibrary.progressFraction`.
 33. **Where are the button pictures and their URLs?** - `ButtonPictures` (enum: `file()`, `url()`, `image()`), `Buttons` (one function per button), `Icon.urlOf()`.
 34. **How do the pages switch?** - `MainView` keeps all pages in one `StackPane`, shows one, and fades it in; the nav bar and Genres menu call `navigate(name)`.
+
+35. **How are accessibility settings applied?** – the `Aa` control opens text-size, background-brightness and background-contrast sliders. `FontScaleSupport` updates current and newly added text nodes; the chosen values persist in Java Preferences. Brightness and contrast affect only the backdrop image, not foreground text.
+36. **How does voice search work?** – the microphone records up to 10 seconds, resamples the audio to 16 kHz, wraps it as WAV, and sends it to OpenAI's Audio Transcriptions API; the transcript is put into the normal catalogue search field. Audio is not saved locally. Configure `OPENAI_API_KEY` as a local environment variable and restart the app. Do not commit the key. The service requires internet access, and API usage charges may apply.
 
 ## Likely "change this live" tasks
 * Add a 17th genre → add one `genre("Name", "tagline", "Title1", ...)` line in `SampleMovieRepository` (titles must already be registered).
