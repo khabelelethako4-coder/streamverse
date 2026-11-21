@@ -8,6 +8,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.HostServices;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -34,6 +35,10 @@ public class MainView extends StackPane {
     private final MyListPage myListPage;
     private final DownloadsPage downloadsPage;
     private final ComingSoonPage comingSoonPage;
+    private final Backdrop backdrop = new Backdrop(0.52, 0.86);
+    private final AccessibilitySettings accessibilitySettings;
+    private final FontScaleSupport fontScaleSupport = new FontScaleSupport();
+    private final SimpleDoubleProperty fontScale = new SimpleDoubleProperty(1.0);
     private final List<ScrollPage> pages = new ArrayList<>();
     private ScrollPage current;
 
@@ -50,16 +55,18 @@ public class MainView extends StackPane {
 
         genreMenu = new GenreMenu(repo.getCategories(), this::navigate);
         StackPane.setAlignment(genreMenu, Pos.TOP_LEFT);
-        nav = new NavBar(this::navigate, this::toggleGenreMenu, this::onSearch);
+        accessibilitySettings = new AccessibilitySettings(fontScale::set, backdrop::setBrightness,
+                backdrop::setContrast);
+        nav = new NavBar(this::navigate, this::toggleGenreMenu, this::onSearch, accessibilitySettings::toggle);
         StackPane.setAlignment(nav, Pos.TOP_CENTER);
 
-        getChildren().add(new Backdrop(0.52, 0.86));
+        getChildren().add(backdrop);
         for (ScrollPage p : pages) {
             p.setVisible(false);
             p.scrollYProperty().addListener((o, a, b) -> { if (p == current) nav.setScrolled(b.doubleValue() > 30); });
             getChildren().add(p);
         }
-        getChildren().addAll(nav, genreMenu);
+        getChildren().addAll(nav, genreMenu, accessibilitySettings);
 
         // click anywhere outside the open Genres menu closes it
         addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
@@ -71,6 +78,10 @@ public class MainView extends StackPane {
         setFocusTraversable(true);
         show(home, "Home", false);
         remindAboutOpenings(repo.getUpcoming());
+    }
+
+    public void attachFontScaleTo(Node sceneRoot) {
+        fontScaleSupport.attach(sceneRoot, fontScale);
     }
 
     // ------------------------------------------------------------------ navigation
@@ -150,6 +161,7 @@ public class MainView extends StackPane {
     }
 
     public void dispose() {
+        nav.dispose();
         home.dispose();
         myListPage.dispose();
         downloadsPage.dispose();
