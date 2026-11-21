@@ -3,7 +3,6 @@ package com.streamverse.ui;
 import com.streamverse.ui.controls.CoverImage;
 import javafx.geometry.Insets;
 import javafx.scene.image.Image;
-import javafx.scene.effect.ColorAdjust;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -24,11 +23,9 @@ public class Backdrop extends StackPane {
 
     /** Dark tone mixed into the picture; also what the hero banner fades into. */
     public static final Color TINT = Color.rgb(14, 6, 8);
-    private final ColorAdjust adjustment = new ColorAdjust();
 
     public Backdrop(double topAlpha, double bottomAlpha) {
         CoverImage picture = new CoverImage();
-        picture.setEffect(adjustment);
         URL url = Backdrop.class.getResource("/images/stage.jpg");
         if (url != null) picture.setImage(new Image(url.toExternalForm()), false);
 
@@ -42,13 +39,5 @@ public class Backdrop extends StackPane {
         getChildren().addAll(picture, shade);
         setMouseTransparent(true);
         setStyle("-fx-background-color: #0e0608;");
-    }
-
-    public void setBrightness(double value) {
-        adjustment.setBrightness(Math.max(-0.5, Math.min(0.3, value)));
-    }
-
-    public void setContrast(double value) {
-        adjustment.setContrast(Math.max(-0.5, Math.min(0.5, value)));
     }
 }

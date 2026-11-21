@@ -25,10 +25,10 @@ import java.util.regex.Pattern;
  * All lists are ObservableLists, so every page just listens and redraws. I/O errors are swallowed on purpose.
  */
 public final class UserLibrary {
+    private static final UserLibrary INSTANCE = new UserLibrary();
     private static final int MAX_RECENT = 12;
     private static final Pattern LIST_LINE = Pattern.compile("([FRDN]):([A-Za-z0-9_-]{1,48})");
     private static final Pattern PROGRESS_LINE = Pattern.compile("P:([A-Za-z0-9_-]{1,48}):(\\d+(?:\\.\\d+)?):(\\d+(?:\\.\\d+)?)");
-    private static final UserLibrary INSTANCE = new UserLibrary();
 
     private final ObservableList<String> favorites = FXCollections.observableArrayList();
     private final ObservableList<String> recents = FXCollections.observableArrayList();

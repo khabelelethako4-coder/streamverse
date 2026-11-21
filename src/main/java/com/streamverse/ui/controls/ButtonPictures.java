@@ -8,6 +8,8 @@ import javafx.scene.image.Image;
  *
  *   ButtonPictures.PLAY.url()   ->  file:/.../icons/play.png        (jar:file:...!/icons/play.png inside a packaged jar)
  *   ButtonPictures.PLAY.image() ->  the picture, loaded from that URL (cached)
+ *
+ * {@link #logAll()} prints every name and URL (the app calls it at start-up).
  */
 public enum ButtonPictures {
     PLAY(Icon.PLAY), PAUSE(Icon.PAUSE), REWIND_10(Icon.REWIND_10), FORWARD_10(Icon.FORWARD_10), NEXT(Icon.SKIP_NEXT),
@@ -35,4 +37,9 @@ public enum ButtonPictures {
         return cached;
     }
 
+    /** Prints "NAME -> URL" for every button picture. */
+    public static void logAll() {
+        System.out.println("[pictures] button pictures and their URLs:");
+        for (ButtonPictures p : values()) System.out.printf("[pictures]   %-17s %s%n", p.name(), p.url());
+    }
 }
